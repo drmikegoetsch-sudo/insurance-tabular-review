@@ -11,7 +11,7 @@ feature natively in its own stack, and nothing else.
 
 | Path | What it is |
 | --- | --- |
-| [`demo/index.html`](demo/index.html) | Clickable mock of the product on fictional accounts: Policy Checking, Quote Comparison, Contract Review. Open it in a browser. |
+| [`demo/`](demo/) | Runnable React demo of the review page on fictional accounts: Quote Comparison, Policy Checking, Contract Review, plus a blank review and every catalog template. Built with Vite, Tailwind, and the templates package. |
 | [`packages/review-templates/`](packages/review-templates/) | The template catalog as a dependency-free TypeScript package: 20 templates, 11 extensions, 559 columns, column builder, prompt assembly, cell parser, and a React template picker. |
 | [`spec/`](spec/) | Implementation spec: data model, API, extraction contract, review lifecycle and UI. |
 | [`templates/source/`](templates/source/) | The authored workbook and JSON export the catalog is generated from. |
@@ -48,8 +48,16 @@ application computes; the model only gathers inputs).
 npm install
 npm test            # catalog integrity, column builder, prompts, cell parser
 npm run typecheck
-npm run demo        # opens demo/index.html
+npm run demo        # builds the package, then serves the React demo on http://localhost:5173
 ```
+
+The demo is the visual reference for the spec. Drag a sample document into a
+review to watch cells extract, click any cell to open the source panel with
+its verbatim citations, switch to "Differences" to see only the columns where
+rows disagree, and use "New Review" to start from a sample, a blank grid, or
+any of the 20 catalog templates. `demo/src/ReviewPage.tsx` and
+`demo/src/reviewData.ts` are the files to lift into a product; the two
+`components/ui` files are stand-ins for shadcn's Button and DropdownMenu.
 
 ```ts
 import { buildColumns, buildSystemPrompt, buildRowPrompt, parseCellLine }
