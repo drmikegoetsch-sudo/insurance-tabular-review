@@ -81,4 +81,4 @@ points at a template that does not list it.
 
 ## License
 
-Not yet chosen. Treat as internal until a license file is added.
+[MIT](LICENSE).
