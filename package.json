@@ -1,0 +1,19 @@
+{
+  "name": "insurance-tabular-review",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Standalone handoff kit for an insurance tabular review product: template catalog package, implementation spec, and clickable demo.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build:catalog": "node templates/scripts/build-catalog.mjs",
+    "test": "npm test --workspace packages/review-templates",
+    "typecheck": "npm run typecheck --workspace packages/review-templates",
+    "build": "npm run build --workspace packages/review-templates",
+    "demo": "node -e \"import('node:child_process').then(m=>m.exec(process.platform==='darwin'?'open demo/index.html':'xdg-open demo/index.html'))\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Mike for Insurance</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f5f6f8;            /* page canvas, cool-biased */
+    --surface: #fdfdfe;       /* panels, table header */
+    --surface-hover: #f3f4f7;
+    --surface-active: #e9ebf0;
+    --floating: #ffffff;
+    --line: #e4e6eb;
+    --line-strong: #d3d6dd;
+    --text: #0f1116;
+    --text-2: #4b5160;
+    --text-3: #7c8291;
+    --accent: #0088ff;
+    --accent-soft: rgba(0,136,255,.10);
+    --accent-line: rgba(0,136,255,.30);
+    --green: #22a06b; --green-soft: #e3f6ec; --green-text: #166a47;
+    --amber: #e5a100; --amber-soft: #fff4d6; --amber-text: #7a5300;
+    --red: #e5484d;   --red-soft: #fde8e9;   --red-text: #9a2a2e;
+    --grey: #9aa0ab;  --grey-soft: #eef0f3;  --grey-text: #4b5160;
+    --shadow: 0 1px 2px rgba(15,17,22,.04), 0 8px 24px -12px rgba(15,17,22,.12);
+    --shadow-float: 0 2px 6px rgba(15,17,22,.06), 0 24px 48px -16px rgba(15,17,22,.22);
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: "EB Garamond", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101216; --surface: #171a20; --surface-hover: #1d2129; --surface-active: #242935;
+      --floating: #1b1f27; --line: #262b35; --line-strong: #343a47;
+      --text: #eef0f4; --text-2: #b4bac6; --text-3: #7f8797;
+      --accent-soft: rgba(0,136,255,.16); --accent-line: rgba(0,136,255,.40);
+      --green-soft: #143024; --green-text: #7fd9ad;
+      --amber-soft: #3a2d0c; --amber-text: #f3c95a;
+      --red-soft: #3b1a1c; --red-text: #f39a9d;
+      --grey-soft: #262b35; --grey-text: #b4bac6;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+      --shadow-float: 0 2px 6px rgba(0,0,0,.5), 0 24px 48px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101216; --surface: #171a20; --surface-hover: #1d2129; --surface-active: #242935;
+    --floating: #1b1f27; --line: #262b35; --line-strong: #343a47;
+    --text: #eef0f4; --text-2: #b4bac6; --text-3: #7f8797;
+    --accent-soft: rgba(0,136,255,.16); --accent-line: rgba(0,136,255,.40);
+    --green-soft: #143024; --green-text: #7fd9ad;
+    --amber-soft: #3a2d0c; --amber-text: #f3c95a;
+    --red-soft: #3b1a1c; --red-text: #f39a9d;
+    --grey-soft: #262b35; --grey-text: #b4bac6;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --shadow-float: 0 2px 6px rgba(0,0,0,.5), 0 24px 48px -16px rgba(0,0,0,.7);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin:0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  svg { display:block; }
+  .num { font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  /* ---------- demo strip ---------- */
+  .demo-strip { display:flex; align-items:center; gap:14px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-2); position: sticky; top:0; z-index: 200; }
+  .demo-strip strong { color: var(--text); font-weight: 600; }
+  .demo-strip .spacer { flex:1; }
+  .scenario-tabs { display:flex; gap:4px; background: var(--surface-active); padding: 3px; border-radius: 999px; }
+  .scenario-tabs button { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--text-2); }
+  .scenario-tabs button[aria-selected="true"] { background: var(--floating); color: var(--text); box-shadow: var(--shadow); }
+  .demo-note { font-size: 11px; color: var(--text-3); }
+
+  /* ---------- app shell ---------- */
+  .shell { display:grid; grid-template-columns: 248px 1fr; height: calc(100vh - 41px); min-height: 640px; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } .sidebar { display:none; } }
+  .sidebar { margin: 10px 0 10px 10px; background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); display:flex; flex-direction:column; padding: 16px 12px; gap: 4px; }
+  .wordmark { display:flex; align-items:center; gap: 8px; font-family: var(--serif); font-size: 24px; padding: 4px 10px 16px; }
+  .nav a { display:flex; align-items:center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--text-2); text-decoration:none; font-size: 13px; }
+  .nav a[aria-current="page"] { background: var(--surface-active); color: var(--text); font-weight: 500; }
+  .nav a svg { width:16px; height:16px; }
+  .nav-group { margin-top: 14px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: var(--text-3); display:flex; justify-content:space-between; }
+  .recent { padding: 2px 12px 6px 24px; font-size: 12px; color: var(--text-2); display:flex; flex-direction:column; gap:6px; }
+  .recent span { overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar .user { margin-top:auto; display:flex; align-items:center; gap:10px; padding: 8px 10px; font-size: 12px; }
+  .avatar { width: 30px; height:30px; border-radius: 999px; background: var(--text); color: var(--bg); display:grid; place-items:center; font-family: var(--serif); font-size: 14px; }
+
+  .main { min-width:0; display:flex; flex-direction:column; padding: 10px 10px 10px 10px; gap: 10px; }
+  .page-head { display:flex; align-items:center; gap: 10px; padding: 6px 4px 0; }
+  .crumbs { display:flex; align-items:center; gap: 6px; font-size: 12px; color: var(--text-3); }
+  .crumbs b { color: var(--text); font-weight: 500; }
+  .page-head .spacer { flex:1; }
+  .pill { display:inline-flex; align-items:center; gap:6px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; background: var(--surface); box-shadow: var(--shadow); color: var(--text); }
+  .pill.black { background: var(--text); color: var(--bg); }
+  .pill.blue { background: var(--accent); color: #fff; }
+  .pill svg { width: 13px; height: 13px; }
+  .pill:disabled { opacity: .5; cursor: default; }
+
+  .review-meta { display:flex; align-items:baseline; gap: 14px; padding: 2px 4px; flex-wrap: wrap; }
+  .review-meta h1 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0; text-wrap: balance; }
+  .review-meta .meta { font-size: 12px; color: var(--text-3); }
+  .review-meta .tpl { font-size: 11px; color: var(--text-2); background: var(--grey-soft); padding: 2px 8px; border-radius: 6px; }
+
+  .toolbar { display:flex; align-items:center; gap: 8px; padding: 0 4px; }
+  .views { display:flex; gap: 2px; }
+  .views button { padding: 5px 10px; border-radius: 999px; font-size: 12px; color: var(--text-2); }
+  .views button[aria-pressed="true"] { background: var(--surface-active); color: var(--text); font-weight: 500; }
+  .progress { font-size: 12px; color: var(--text-3); display:flex; align-items:center; gap: 8px; }
+  .progress .bar { width: 120px; height: 4px; background: var(--surface-active); border-radius: 4px; overflow:hidden; }
+  .progress .bar i { display:block; height:100%; width:0; background: var(--accent); transition: width .25s; }
+
+  /* ---------- workspace: table + side panels ---------- */
+  .work { flex:1; min-height:0; display:grid; grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr); gap: 10px; }
+  .work.with-panel { grid-template-columns: 1fr 380px; }
+  @media (max-width: 1100px) { .work.with-panel { grid-template-columns: 1fr; } .side { display:none; } }
+  .table-wrap { min-width:0; min-height:0; overflow:auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+  table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+  th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); vertical-align: top; text-align:left; }
+  th { position: sticky; top:0; z-index: 5; background: var(--surface); font-size: 12px; font-weight: 500; color: var(--text-2); padding: 9px 10px; height: 40px; white-space: nowrap; }
+  th .kind { display:inline-block; margin-left: 6px; font-size: 10px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); }
+  th.doc, td.doc { position: sticky; left: 0; z-index: 6; background: var(--surface); min-width: 250px; max-width: 250px; }
+  th.doc { z-index: 8; }
+  td { padding: 8px 10px; font-size: 12px; min-width: 210px; max-width: 300px; color: var(--text); cursor: pointer; }
+  td:hover { background: var(--surface-hover); }
+  td.selected { box-shadow: inset 0 0 0 2px var(--accent-line); background: var(--accent-soft); }
+  td.doc { cursor: default; }
+  td.doc:hover { background: var(--surface); }
+  .doc-cell { display:flex; gap: 8px; align-items:flex-start; }
+  .doc-cell svg { width: 14px; height: 14px; color: var(--text-3); flex: none; margin-top: 2px; }
+  .doc-cell .t { font-weight: 500; }
+  .doc-cell .s { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .cell { display:flex; gap: 8px; align-items:flex-start; }
+  .flag { width: 8px; height: 8px; border-radius: 999px; flex:none; margin-top: 5px; }
+  .flag.green { background: var(--green); } .flag.yellow { background: var(--amber); } .flag.red { background: var(--red); } .flag.grey { background: var(--grey); }
+  .cell-text { flex:1; min-width:0; display:-webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .cell-text ul { margin: 0; padding-left: 14px; }
+  .cell-text li + li { margin-top: 2px; }
+  .cite { display:inline-flex; align-items:center; justify-content:center; min-width: 16px; height: 16px; padding: 0 4px; margin-left: 3px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 600; vertical-align: 1px; }
+  .tag { display:inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+  .tag.green { background: var(--green-soft); color: var(--green-text); }
+  .tag.yellow { background: var(--amber-soft); color: var(--amber-text); }
+  .tag.red { background: var(--red-soft); color: var(--red-text); }
+  .tag.grey { background: var(--grey-soft); color: var(--grey-text); }
+  .tag.money { background: var(--green-soft); color: var(--green-text); }
+  td.pending .cell-text { color: var(--text-3); }
+  .shimmer { height: 12px; border-radius: 4px; background: linear-gradient(90deg, var(--surface-active) 25%, var(--surface-hover) 50%, var(--surface-active) 75%); background-size: 200% 100%; animation: sh 1.2s linear infinite; }
+  .shimmer + .shimmer { margin-top: 6px; width: 70%; }
+  @keyframes sh { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  tr.hidden-row { display:none; }
+  th.add { min-width: 120px; color: var(--text-3); font-weight: 400; }
+  th.add button { display:flex; align-items:center; gap:6px; }
+
+  /* ---------- side panel ---------- */
+  .side { min-height:0; display:flex; flex-direction:column; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); overflow:hidden; }
+  .side-tabs { display:flex; gap: 2px; padding: 10px 12px 0; border-bottom: 1px solid var(--line); }
+  .side-tabs button { padding: 8px 10px; font-size: 12px; color: var(--text-3); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .side-tabs button[aria-selected="true"] { color: var(--text); font-weight: 500; border-bottom-color: var(--text); }
+  .side-tabs .spacer { flex:1; }
+  .side-tabs .close { padding: 8px; }
+  .side-body { flex:1; min-height:0; overflow:auto; padding: 14px 16px; display:flex; flex-direction:column; gap: 14px; }
+  .kv { display:grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 12px; }
+  .kv dt { color: var(--text-3); } .kv dd { margin:0; }
+  .sec-title { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); margin: 0 0 6px; }
+  .summary-box { font-size: 13px; }
+  .summary-box ul { margin: 0; padding-left: 16px; }
+  .reason { font-size: 12px; color: var(--text-2); }
+  .status-line { display:flex; align-items:center; gap: 8px; font-size: 12px; }
+  .citation { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12px; }
+  .citation + .citation { margin-top: 8px; }
+  .citation .h { display:flex; align-items:center; gap: 8px; color: var(--text-3); margin-bottom: 6px; }
+  .citation .h b { color: var(--text); font-weight: 500; }
+  .citation q { font-family: var(--serif); font-size: 14px; color: var(--text); quotes: "\201C" "\201D"; }
+  .actions { display:flex; gap: 8px; flex-wrap: wrap; }
+  .actions .pill { font-size: 11px; padding: 5px 10px; }
+  .empty { color: var(--text-3); font-size: 12px; text-align:center; padding: 40px 20px; }
+  .empty h3 { font-family: var(--serif); font-weight: 400; font-size: 20px; color: var(--text); margin: 0 0 6px; }
+
+  /* chat */
+  .chat { display:flex; flex-direction:column; gap: 12px; }
+  .msg { max-width: 92%; font-size: 12.5px; }
+  .msg.user { align-self:flex-end; background: var(--surface-active); padding: 8px 12px; border-radius: 14px 14px 4px 14px; }
+  .msg.ai { align-self:flex-start; }
+  .msg.ai p { margin: 0 0 8px; }
+  .msg.ai ul { margin: 0 0 8px; padding-left: 16px; }
+  .msg.ai li + li { margin-top: 3px; }
+  .chat-input { display:flex; align-items:center; gap: 8px; margin-top:auto; border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 14px; background: var(--floating); }
+  .chat-input input { flex:1; border:0; outline:0; background: transparent; color: var(--text); font: inherit; }
+  .chat-input button { width: 28px; height: 28px; border-radius: 999px; background: var(--text); color: var(--bg); display:grid; place-items:center; }
+  .chat-input button svg { width: 14px; height: 14px; }
+  .suggest { display:flex; flex-wrap:wrap; gap: 6px; }
+  .suggest button { font-size: 11px; padding: 5px 10px; border-radius: 999px; background: var(--surface-active); color: var(--text-2); }
+
+  /* ---------- modal ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(15,17,22,.35); backdrop-filter: blur(4px); display:none; align-items:center; justify-content:center; z-index: 300; padding: 20px; }
+  .scrim.open { display:flex; }
+  .modal { width: min(880px, 100%); max-height: 88vh; background: var(--floating); border-radius: 20px; box-shadow: var(--shadow-float); display:flex; flex-direction:column; overflow:hidden; }
+  .modal-head { display:flex; align-items:center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-3); }
+  .modal-head b { color: var(--text); font-weight: 500; }
+  .modal-body { flex:1; min-height:0; overflow:auto; padding: 18px; display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 720px) { .modal-body { grid-template-columns: 1fr; } }
+  .field label, .field .lbl { display:block; font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; }
+  .field input[type=text] { width:100%; border: 0; border-bottom: 1px solid var(--line-strong); background: transparent; padding: 6px 0; font: inherit; color: var(--text); outline: none; }
+  .field + .field { margin-top: 16px; }
+  .select { display:flex; align-items:center; justify-content:space-between; height: 38px; padding: 0 12px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 12.5px; }
+  .tpl-list { border: 1px solid var(--line); border-radius: 12px; overflow:auto; max-height: 300px; }
+  .tpl-group { padding: 8px 12px 4px; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); position: sticky; top:0; background: var(--floating); }
+  .tpl-list button { display:flex; width:100%; justify-content: space-between; gap: 10px; padding: 7px 12px; font-size: 12px; text-align:left; }
+  .tpl-list button:hover { background: var(--surface-hover); }
+  .tpl-list button[aria-selected="true"] { background: var(--accent-soft); }
+  .tpl-list button small { color: var(--text-3); white-space: nowrap; }
+  .tpl-detail { display:flex; flex-direction:column; gap: 12px; font-size: 12px; color: var(--text-2); }
+  .tpl-detail h3 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--text); }
+  .tpl-detail .row-grain { padding: 10px 12px; background: var(--surface); border-radius: 10px; }
+  .tpl-detail b { color: var(--text); font-weight: 500; }
+  .chips { display:flex; flex-wrap:wrap; gap: 6px; }
+  .chips label { display:inline-flex; align-items:center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-active); font-size: 11.5px; cursor:pointer; }
+  .chips input { accent-color: var(--accent); margin:0; }
+  .col-preview { display:flex; flex-wrap:wrap; gap: 4px; }
+  .col-preview span { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); color: var(--text-2); }
+  .col-preview span.more { color: var(--text-3); box-shadow:none; }
+  .modal-foot { display:flex; align-items:center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
+  .modal-foot .spacer { flex:1; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 999px; font-size: 12px; box-shadow: var(--shadow-float); opacity: 0; transition: opacity .2s; z-index: 400; pointer-events:none; }
+  .toast.show { opacity: 1; }
+</style>
+
+<div class="demo-strip">
+  <strong>Mike for Insurance</strong>
+  <span>Interactive demo. Fictional accounts, carriers, and figures. Every column comes from the review-template catalog.</span>
+  <span class="spacer"></span>
+  <div class="scenario-tabs" role="tablist" aria-label="Scenario">
+    <button role="tab" aria-selected="true" data-scenario="policy">Policy Checking</button>
+    <button role="tab" aria-selected="false" data-scenario="quote">Quote Comparison</button>
+    <button role="tab" aria-selected="false" data-scenario="contract">Contract Review</button>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="wordmark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1M12 2l2 4-2 4-2-4zM12 22l2-4-2-4-2 4z"/></svg>
+      Mike
+    </div>
+    <nav class="nav">
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Assistant</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</a>
+      <a href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>Tabular Review</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12m0 0-5 4.5M12 12l5 4.5"/></svg>Workflows</a>
+    </nav>
+    <div class="nav-group">Recent Projects <span>›</span></div>
+    <div class="recent" id="recent-projects"></div>
+    <div class="nav-group">Review History <span>›</span></div>
+    <div class="recent" id="recent-reviews"></div>
+    <div class="user"><div class="avatar">D</div><div><div style="font-weight:500">Dana Whitfield</div><div style="color:var(--text-3)">Account Executive · Northgate Risk Partners</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumbs"><span>Projects</span><span>›</span><span id="crumb-project"></span><span>›</span><b id="crumb-review"></b></div>
+      <span class="spacer"></span>
+      <button class="pill" id="btn-new">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New review
+      </button>
+      <button class="pill" id="btn-export">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export
+      </button>
+      <button class="pill black" id="btn-run">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>Run review
+      </button>
+    </div>
+
+    <div class="review-meta">
+      <h1 id="review-title"></h1>
+      <span class="tpl" id="review-template"></span>
+      <span class="meta" id="review-meta"></span>
+    </div>
+
+    <div class="toolbar">
+      <div class="views" id="views" role="group" aria-label="Views"></div>
+      <span class="spacer" style="flex:1"></span>
+      <div class="progress" id="progress"><span id="progress-label">Ready</span><div class="bar"><i id="progress-bar"></i></div></div>
+      <button class="pill" id="btn-chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ask about this review
+      </button>
+    </div>
+
+    <div class="work" id="work">
+      <div class="table-wrap"><table id="grid"><thead></thead><tbody></tbody></table></div>
+      <aside class="side" id="side" hidden>
+        <div class="side-tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-side="cell">Cell</button>
+          <button role="tab" aria-selected="false" data-side="chat">Chat</button>
+          <span class="spacer"></span>
+          <button class="close" id="side-close" aria-label="Close panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <div class="side-body" id="side-cell"></div>
+        <div class="side-body chat" id="side-chat" hidden></div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-label="New tabular review">
+  <div class="modal">
+    <div class="modal-head"><span>Tabular Reviews</span><span>›</span><b>New Tabular Review</b><span>›</span><span>Details</span></div>
+    <div class="modal-body">
+      <div>
+        <div class="field"><label for="m-name">Review name</label><input type="text" id="m-name" placeholder="Review name"></div>
+        <div class="field"><span class="lbl">Model</span><div class="select"><span>Claude Sonnet 5</span><span style="color:var(--text-3)">⌄</span></div></div>
+        <div class="field"><span class="lbl">Review template</span><div class="tpl-list" id="tpl-list"></div></div>
+        <div class="field"><span class="lbl">Document grouping</span><label style="display:flex;gap:8px;align-items:center;font-weight:400;color:var(--text)"><input type="checkbox" style="accent-color:var(--accent)"> Treat documents in the same folder as one review row</label></div>
+      </div>
+      <div class="tpl-detail" id="tpl-detail"></div>
+    </div>
+    <div class="modal-foot">
+      <span style="font-size:12px;color:var(--text-3)">Step 1 of 3 · Details → Access → Add documents</span>
+      <span class="spacer"></span>
+      <button class="pill" id="m-cancel">Cancel</button>
+      <button class="pill black" id="m-next">Next</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ------------------------------------------------------------------
+// Data. Three scenarios, each bound to a template from the catalog.
+// c(text, flag, reasoning, citations) builds one cell.
+// ------------------------------------------------------------------
+const c = (text, flag, reasoning, cites = [], status = "found") => ({ text, flag, reasoning, cites, status });
+const q = (doc, page, quote) => ({ doc, page, quote });
+const L = (...items) => "<ul>" + items.map(i => "<li>" + i + "</li>").join("") + "</ul>";
+const T = (label, tone) => `<span class="tag ${tone}">${label}</span>`;
+
+const SCENARIOS = {
+  policy: {
+    project: "Harborline Logistics LLC — 2026 renewal",
+    title: "Policy delivery check — Harborline 2026",
+    template: "CI04 · Policy Delivery Check",
+    meta: "3 placements · 20 columns · Claude Sonnet 5 · run 09 Sep 2026",
+    rowLabel: "Placement",
+    views: [["Default", null], ["Discrepancies only", r => r.some(x => x.flag === "red" || x.flag === "yellow")], ["Carrier correction list", null]],
+    columns: [
+      ["Insured entity match", "analysis"], ["Carrier match", "analysis"], ["Term match", "analysis"], ["Premium match", "analysis"],
+      ["Limits match", "analysis"], ["Retentions match", "analysis"], ["Endorsements match", "analysis"], ["Additional insured match", "analysis"],
+      ["Unapproved changes", "analysis"], ["Delivery check result", "analysis"], ["Correction request draft", "analysis"], ["Outstanding evidence", "analysis"],
+    ],
+    rows: [
+      { doc: "General Liability", sub: "Accepted quote · Binder · Issued policy CGL-4471902", cells: [
+        c("Harborline Logistics LLC on all three stages.<span class=cite>1</span>", "green", "found. Named insured identical across the accepted quote, binder, and issued declarations. No documented entity change.", [q("Issued policy CGL-4471902.pdf", 1, "Named Insured: Harborline Logistics LLC"), q("Binder B-22-0917.pdf", 1, "Named Insured: Harborline Logistics LLC")]),
+        c("Northwind Mutual Insurance Company at each stage.<span class=cite>1</span>", "green", "found. Risk-bearing insurer unchanged; MGA (Coastline Program Managers) appears only as producer.", [q("Issued policy CGL-4471902.pdf", 1, "Issued by Northwind Mutual Insurance Company")]),
+        c("01 Oct 2026 12:01 a.m. to 01 Oct 2027 12:01 a.m. on all stages.<span class=cite>1</span>", "green", "found. Effective and expiration dates and times match.", [q("Issued policy CGL-4471902.pdf", 1, "Policy Period: 10/01/2026 to 10/01/2027 12:01 A.M.")]),
+        c("Accepted $84,250; issued $84,250 (USD, annual, excl. taxes and fees).<span class=cite>1</span>", "green", "found. Premium basis identical. Terrorism premium shown separately on both.", [q("Issued policy CGL-4471902.pdf", 2, "Total Policy Premium $84,250")]),
+        c(L("Each occurrence $1,000,000 — matches", "General aggregate $2,000,000 — matches", "Products/completed ops aggregate $2,000,000 — matches", "Damage to rented premises $300,000 — <b>issued $100,000</b>") + "<span class=cite>1</span>", "red", "found, with discrepancy. Accepted quote lists $300,000 damage to premises rented to you; issued declarations show $100,000. No revision documented.", [q("Issued policy CGL-4471902.pdf", 2, "Damage To Premises Rented To You $100,000 Any One Premises"), q("Accepted quote NWM-Q-88213.pdf", 3, "Damage to Premises Rented to You: $300,000")]),
+        c("$10,000 per occurrence deductible, BI and PD combined, on both.<span class=cite>1</span>", "green", "found. Deductible endorsement CG 03 00 matches the accepted quote.", [q("Issued policy CGL-4471902.pdf", 9, "Deductible: $10,000 Per Occurrence, Bodily Injury and Property Damage Liability Combined")]),
+        c(L("CG 20 10 04 13 Additional Insured — Owners, Lessees or Contractors: issued ✓", "CG 20 37 04 13 Completed Operations: issued ✓", "CG 24 04 Waiver of Transfer of Rights: issued ✓", "<b>CG 25 03 Designated Construction Project(s) Aggregate: promised, not issued</b>") + "<span class=cite>1</span>", "red", "found, with discrepancy. Schedule of forms omits CG 25 03 although the accepted quote lists it under 'Forms and Endorsements to be issued'.", [q("Issued policy CGL-4471902.pdf", 3, "Forms and Endorsements: CG 00 01 04 13, CG 20 10 04 13, CG 20 37 04 13, CG 24 04 05 09, CG 03 00 01 96"), q("Accepted quote NWM-Q-88213.pdf", 4, "CG 25 03 05 09 Designated Construction Project(s) General Aggregate Limit")]),
+        c("Blanket AI where required by written contract, ongoing and completed operations; primary and non-contributory via CG 20 01.<span class=cite>1</span>", "green", "found. Issued endorsements match the agreed additional insured, primary/non-contributory, and waiver requirements.", [q("Issued policy CGL-4471902.pdf", 12, "This insurance is primary to and will not seek contribution from any other insurance available to an additional insured")]),
+        c(L("Damage to rented premises limit reduced $300,000 → $100,000", "CG 25 03 per-project aggregate omitted"), "red", "found. Two differences with no client approval or carrier clarification in the file.", []),
+        c(T("Discrepancies found", "red"), "red", "Two unapproved changes affect limits and aggregate structure. A clean result requires all requested comparisons to match with documented approvals.", []),
+        c(L("Reissue declarations to show Damage to Premises Rented to You at $300,000 per accepted quote NWM-Q-88213 p.3.", "Add CG 25 03 05 09 Designated Construction Project(s) General Aggregate Limit as listed in the accepted quote p.4."), "yellow", "Draft only. Do not send, bind, or modify coverage.", []),
+        c("None. All three stage documents present and readable.", "green", "found. Acceptance email dated 22 Sep 2026 documents client approval of the quote.", [q("Acceptance email 22 Sep 2026.pdf", 1, "Please bind per quote NWM-Q-88213 effective 10/1")]),
+      ]},
+      { doc: "Commercial Auto", sub: "Accepted quote · Binder · Issued policy CA-9930014", cells: [
+        c("Harborline Logistics LLC on all three stages.<span class=cite>1</span>", "green", "found.", [q("Issued policy CA-9930014.pdf", 1, "Named Insured: Harborline Logistics LLC")]),
+        c("Northwind Mutual Insurance Company at each stage.", "green", "found.", []),
+        c("01 Oct 2026 to 01 Oct 2027 on all stages.", "green", "found.", []),
+        c("Accepted $61,900; <b>issued $63,410</b> (USD, annual).<span class=cite>1</span>", "yellow", "conflicting_evidence. Issued premium is $1,510 higher. The binder notes a schedule revision adding one unit (2025 Freightliner M2) on 25 Sep; no client instruction for that addition is in the file.", [q("Issued policy CA-9930014.pdf", 2, "Total Premium $63,410"), q("Binder B-22-0918.pdf", 2, "Revised schedule: added VIN 1FVACWFC…")]),
+        c("Liability $1,000,000 CSL; UM/UIM $1,000,000; medical payments $5,000 — all match.", "green", "found.", []),
+        c("Comprehensive $1,000 / Collision $2,500 per vehicle — matches.", "green", "found.", []),
+        c(L("CA 20 48 Designated Insured: issued ✓", "CA 04 44 Waiver of Transfer of Rights: issued ✓", "CA 99 16 Hired Auto Specified as Covered Autos: issued ✓"), "green", "found. All promised forms issued at the same edition.", []),
+        c("Designated insured endorsement lists contract counterparties as agreed.", "green", "found.", []),
+        c(L("Premium +$1,510 tied to a schedule change without client instruction in file"), "yellow", "found. May be approved; evidence missing rather than a confirmed error.", []),
+        c(T("Incomplete evidence", "yellow"), "yellow", "One premium difference lacks approval evidence. Confirm the vehicle addition with the client before treating this as a discrepancy.", []),
+        c("Confirm with Harborline whether the 2025 Freightliner M2 was added on instruction; if not, request removal and premium adjustment.", "yellow", "Draft only.", []),
+        c(L("Client instruction adding VIN 1FVACWFC…"), "yellow", "insufficient_inputs.", []),
+      ]},
+      { doc: "Commercial Property", sub: "Accepted quote · Binder · Issued policy CPP-2201177", cells: [
+        c("Harborline Logistics LLC on all three stages.", "green", "found.", []),
+        c("Northwind Mutual Insurance Company at each stage.", "green", "found.", []),
+        c("01 Oct 2026 to 01 Oct 2027 on all stages.", "green", "found.", []),
+        c("Accepted $128,700; issued $128,700 (USD, annual).", "green", "found.", []),
+        c("Blanket building and contents $18,450,000; business income $3,200,000 (ALS 12 months) — match.<span class=cite>1</span>", "green", "found.", [q("Issued policy CPP-2201177.pdf", 2, "Blanket Limit of Insurance $18,450,000")]),
+        c("$25,000 per occurrence AOP; <b>wind/hail 2% of TIV at Loc. 3 not stated on issued declarations</b>.<span class=cite>1</span>", "yellow", "not_stated on the issued declarations. Accepted quote shows a 2% wind/hail deductible for Location 3 (Wilmington, NC). Issued declarations list only the AOP deductible; a separate wind endorsement may exist but is not in the file.", [q("Accepted quote NWM-Q-88214.pdf", 2, "Windstorm or Hail Deductible: 2% of the value at Location 3")]),
+        c(L("CP 04 05 Ordinance or Law: issued ✓", "CP 15 45 Utility Services Time Element: issued ✓", "CP 03 21 Windstorm or Hail Percentage Deductible: <b>not in schedule of forms</b>"), "yellow", "not_stated. Missing endorsement wording remains missing even though the deductible is referenced in the quote.", []),
+        c("Loss payee and mortgagee schedule matches the accepted instructions.", "green", "found.", []),
+        c(L("Wind/hail percentage deductible endorsement absent from issued forms"), "yellow", "found. Could be an omission on issue or a carrier oversight; not an approved change either way.", []),
+        c(T("Incomplete evidence", "yellow"), "yellow", "Cannot confirm the wind/hail deductible as issued. Request CP 03 21 from the carrier.", []),
+        c("Request issuance of CP 03 21 reflecting the 2% wind/hail deductible at Location 3 per accepted quote NWM-Q-88214 p.2.", "yellow", "Draft only.", []),
+        c(L("Issued CP 03 21 endorsement or carrier confirmation of the wind/hail deductible"), "yellow", "insufficient_inputs.", []),
+      ]},
+    ],
+    chat: [
+      ["What needs to go back to the carrier before we deliver?", "<p>Two items on the General Liability placement are confirmed discrepancies and one item on each of the other two placements needs evidence before delivery.</p><ul><li><b>General Liability:</b> Damage to rented premises was issued at $100,000 against an accepted $300,000 <span class=cite>1</span>, and the CG 25 03 per-project aggregate endorsement is missing from the schedule of forms <span class=cite>2</span>.</li><li><b>Commercial Auto:</b> issued premium is $1,510 above the accepted quote, tied to a vehicle added on 25 Sep. Confirm the client instructed that addition before treating it as an error <span class=cite>3</span>.</li><li><b>Commercial Property:</b> the 2% wind/hail deductible at Location 3 is not on the issued declarations and CP 03 21 is not in the forms schedule <span class=cite>4</span>.</li></ul><p>The correction request drafts in the table cover all four. Nothing here binds or changes coverage until you send it.</p>"],
+    ],
+  },
+
+  quote: {
+    project: "Cedar Ridge Manufacturing Inc. — GL placement",
+    title: "GL quote comparison — Cedar Ridge 2026-27",
+    template: "CI01 · Commercial Quote Comparison + General Liability extension",
+    meta: "3 options · 20 + 7 columns · Claude Sonnet 5 · run 08 Sep 2026",
+    rowLabel: "Quote option",
+    views: [["Default", null], ["Unmet requirements", r => r.some(x => x.flag === "red")], ["Pivot: coverage items × options", null]],
+    columns: [
+      ["Carrier", "extract"], ["Policy or quote number", "extract"], ["Premium", "extract"], ["Limits", "extract"], ["Deductibles and retentions", "extract"],
+      ["Sublimits", "extract"], ["Exclusions", "extract"], ["Quote status", "extract"], ["Quote expiration", "extract"], ["Subjectivities", "extract"],
+      ["Requested coverage match", "analysis"], ["Material trade-offs", "analysis"], ["Price comparability", "analysis"], ["Follow-up questions", "analysis"],
+    ],
+    rows: [
+      { doc: "Option A · Northwind Mutual", sub: "Quote NWM-Q-91002 · baseline (expiring carrier)", cells: [
+        c("Northwind Mutual Insurance Company.<span class=cite>1</span> Coastline Program Managers is the MGA, not the insurer.", "green", "found.", [q("Quote NWM-Q-91002.pdf", 1, "Insurer: Northwind Mutual Insurance Company")]),
+        c("NWM-Q-91002 (firm quote, v2, 04 Sep 2026)", "green", "found.", []),
+        c(T("$96,400", "money") + " USD · annual · excludes $1,928 terrorism and $482 state surcharge.<span class=cite>1</span>", "green", "found. Deposit premium; auditable on sales.", [q("Quote NWM-Q-91002.pdf", 2, "Annual Premium $96,400 (excluding TRIA and surcharges)")]),
+        c(L("Each occurrence $1,000,000", "General aggregate $2,000,000", "Products/completed ops aggregate $2,000,000", "Personal & advertising injury $1,000,000"), "green", "found.", []),
+        c("$25,000 per occurrence, BI/PD combined, defense inside the deductible.<span class=cite>1</span>", "yellow", "found. Defense costs erode the deductible, which the requested specification did not allow for.", [q("Quote NWM-Q-91002.pdf", 3, "Deductible applies to damages and supplementary payments")]),
+        c(L("Damage to rented premises $300,000", "Medical expense $10,000"), "green", "found.", []),
+        c(L("CG 21 47 Employment-Related Practices", "CG 21 96 Silica", "<b>Manuscript: Products Recall Expense exclusion</b>", "CG 21 06 Access or Disclosure of Confidential Information"), "yellow", "found. The recall expense exclusion is non-standard and relevant to Cedar Ridge's food-contact packaging line.", []),
+        c(T("Firm quote", "green"), "green", "found.", []),
+        c("30 Sep 2026, anchored to quote date.<span class=cite>1</span>", "green", "found.", [q("Quote NWM-Q-91002.pdf", 1, "This quote is valid for 30 days from 04 Sep 2026")]),
+        c(L("Signed TRIA form", "Updated sales figures (2025 audited)", "Loss runs currently valued"), "green", "found. Three subjectivities, all routine.", []),
+        c(L("$1M/$2M limits — " + T("Met", "green"), "Blanket AI incl. completed ops — " + T("Met", "green"), "Per-project aggregate — " + T("Met", "green"), "No recall exclusion — " + T("Expressly not offered", "red"), "Defense outside deductible — " + T("Expressly not offered", "red")), "red", "found. Two of five documented requirements are not offered.", []),
+        c("Baseline option. Incumbent carrier, no coverage change from expiring except the added recall exclusion.<span class=cite>1</span>", "yellow", "found. The recall exclusion is new this term versus the expiring policy.", [q("Expiring policy CGL-3310221.pdf", 3, "Forms: CG 00 01, CG 20 10, CG 20 37, CG 25 03, CG 21 47")]),
+        c(T("Comparable", "green") + " Same term, exposure basis ($42.5M sales), currency, and tax/fee exclusion as Options B and C.", "green", "found.", []),
+        c(L("Will Northwind remove the manuscript recall exclusion, or offer a recall sublimit?", "Can defense be moved outside the deductible for an additional premium?"), "grey", "Questions drafted from evidenced gaps. Intended party: Northwind underwriter.", []),
+      ]},
+      { doc: "Option B · Atlas Specialty", sub: "Quote ASP-26-44817", cells: [
+        c("Atlas Specialty Insurance Company (non-admitted).<span class=cite>1</span>", "yellow", "found. Surplus lines placement; taxes and stamping fees apply.", [q("Quote ASP-26-44817.pdf", 1, "Atlas Specialty Insurance Company, a surplus lines insurer")]),
+        c("ASP-26-44817 (indication, 02 Sep 2026)", "yellow", "found. Indication, not a firm quote.", []),
+        c(T("$88,750", "money") + " USD · annual · plus 4.85% surplus lines tax and $150 stamping fee.<span class=cite>1</span>", "green", "found. Lowest headline premium; taxes are additional.", [q("Quote ASP-26-44817.pdf", 2, "Premium $88,750 · SL Tax 4.85% · Stamping Fee $150")]),
+        c(L("Each occurrence $1,000,000", "General aggregate $2,000,000", "Products/completed ops aggregate $2,000,000", "Personal & advertising injury $1,000,000"), "green", "found.", []),
+        c("$25,000 self-insured retention per occurrence; defense outside the SIR.<span class=cite>1</span>", "green", "found. SIR rather than deductible: insured must pay before the insurer responds.", [q("Quote ASP-26-44817.pdf", 3, "Self-Insured Retention $25,000 each occurrence. Defense expenses are in addition to the retention")]),
+        c(L("Damage to rented premises $100,000", "Medical expense $5,000"), "yellow", "found. Lower than requested $300,000 rented premises limit.", []),
+        c(L("Employment-related practices", "Silica", "<b>Absolute pollution (no hostile fire exception)</b>", "Cross suits"), "red", "found. Absolute pollution exclusion without the hostile fire exception narrows the ISO base form materially.", []),
+        c(T("Indication", "yellow"), "yellow", "found. Subject to underwriter review of a completed supplemental application.", []),
+        c("Not stated on the indication.", "grey", "not_stated. No validity period given.", [], "not_stated"),
+        c(L("Completed supplemental products application", "Signed SL disclosure", "Five years currently valued loss runs", "Inspection within 60 days of binding"), "yellow", "found. Four subjectivities; the inspection is a post-bind condition.", []),
+        c(L("$1M/$2M limits — " + T("Met", "green"), "Blanket AI incl. completed ops — " + T("Met", "green"), "Per-project aggregate — " + T("Not stated", "grey"), "No recall exclusion — " + T("Met", "green"), "Defense outside deductible — " + T("Met", "green")), "yellow", "found. Per-project aggregate not addressed in the indication.", []),
+        c(L("Favorable: no recall exclusion; defense outside retention; lowest premium before tax", "Adverse: absolute pollution exclusion; rented premises limit $100,000; non-admitted paper; indication only"), "yellow", "found. Compared with baseline Option A on identical exposure.", []),
+        c(T("Comparable after tax", "yellow") + " Add $4,454 SL tax and fee for a like-for-like $93,204 versus Option A's $96,400.", "yellow", "found. Firm-quote versus indication status still differs.", []),
+        c(L("Will Atlas confirm a firm quote and validity date?", "Can the pollution exclusion be amended to include the hostile fire exception?", "Is a per-project aggregate available?"), "grey", "Intended party: Atlas Specialty underwriter via wholesaler.", []),
+      ]},
+      { doc: "Option C · Meridian Insurance Co.", sub: "Quote MER-GL-770215", cells: [
+        c("Meridian Insurance Company.<span class=cite>1</span>", "green", "found. Admitted carrier.", [q("Quote MER-GL-770215.pdf", 1, "Meridian Insurance Company (admitted, NAIC 24118)")]),
+        c("MER-GL-770215 (firm quote, 05 Sep 2026)", "green", "found.", []),
+        c(T("$103,900", "money") + " USD · annual · excludes $2,078 terrorism.<span class=cite>1</span>", "yellow", "found. Highest premium of the three.", [q("Quote MER-GL-770215.pdf", 2, "Total Annual Premium $103,900")]),
+        c(L("Each occurrence $1,000,000", "General aggregate $2,000,000", "Products/completed ops aggregate $2,000,000", "Personal & advertising injury $1,000,000"), "green", "found.", []),
+        c("$10,000 per occurrence deductible; defense outside the deductible.", "green", "found.", []),
+        c(L("Damage to rented premises $300,000", "Medical expense $10,000", "Product recall expense $250,000 (sublimit, by endorsement)"), "green", "found. Recall expense is a sublimit, not an exclusion.", []),
+        c(L("CG 21 47 Employment-Related Practices", "CG 21 96 Silica", "CG 21 06 Access or Disclosure"), "green", "found. Standard ISO exclusions only.", []),
+        c(T("Firm quote", "green"), "green", "found.", []),
+        c("05 Oct 2026.", "green", "found.", []),
+        c(L("Signed TRIA form", "Current loss runs"), "green", "found.", []),
+        c(L("$1M/$2M limits — " + T("Met", "green"), "Blanket AI incl. completed ops — " + T("Met", "green"), "Per-project aggregate — " + T("Met", "green"), "No recall exclusion — " + T("Met", "green"), "Defense outside deductible — " + T("Met", "green")), "green", "found. All five documented requirements met.", []),
+        c(L("Favorable: all requirements met; $250,000 recall sublimit; lower deductible", "Adverse: premium $7,500 above baseline"), "green", "found.", []),
+        c(T("Comparable", "green") + " Same term, exposure basis, currency, and tax/fee exclusion as baseline.", "green", "found.", []),
+        c(L("Is the recall sublimit available at $500,000, and at what premium?"), "grey", "Intended party: Meridian underwriter.", []),
+      ]},
+    ],
+    chat: [
+      ["Which option should I put in front of the client and why?", "<p>On the documented requirements, only Option C (Meridian) meets all five. Options A and B each miss two or leave one unstated.</p><ul><li><b>Option C</b> costs $7,500 more than the incumbent but carries a $250,000 recall sublimit, keeps defense outside a $10,000 deductible, and is a firm quote on admitted paper <span class=cite>1</span>.</li><li><b>Option A</b> is the incumbent at $96,400 but adds a manuscript recall exclusion this term and puts defense inside the deductible <span class=cite>2</span>.</li><li><b>Option B</b> is cheapest before tax but is only an indication, has an absolute pollution exclusion with no hostile fire exception, and is non-admitted <span class=cite>3</span>.</li></ul><p>This is a comparison of quoted terms against your stated requirements, not a recommendation to bind. The follow-up questions column has the asks that could close the gaps on A and B if the client wants to pursue price.</p>"],
+    ],
+  },
+
+  contract: {
+    project: "Pinecrest Health System — MSA insurance review",
+    title: "Contract insurance requirements — Pinecrest MSA",
+    template: "CI11 · Contract Insurance Requirements + General Liability extension",
+    meta: "6 requirements · 20 + 7 columns · Claude Sonnet 5 · run 09 Sep 2026",
+    rowLabel: "Requirement",
+    views: [["Default", null], ["Unmet or unevidenced", r => r.some(x => x.flag === "red" || x.flag === "yellow")], ["Evidence requests", null]],
+    columns: [
+      ["Clause reference", "extract"], ["Coverage required", "extract"], ["Required limit", "extract"], ["Additional insured requirement", "extract"],
+      ["Primary requirement", "extract"], ["Waiver requirement", "extract"], ["Notice requirement", "extract"], ["Relevant policy", "extract"],
+      ["Actual policy term", "extract"], ["Requirement assessment", "analysis"], ["Difference", "analysis"], ["Required evidence or correction", "analysis"], ["Client explanation", "analysis"],
+    ],
+    rows: [
+      { doc: "§12.1 Commercial General Liability", sub: "Obligated: Cedar Ridge Manufacturing Inc. · Draft v4, 03 Sep 2026", cells: [
+        c("§12.1, Exhibit D (Insurance Requirements).<span class=cite>1</span>", "green", "found.", [q("Pinecrest MSA v4.pdf", 14, "12.1 Commercial General Liability")]),
+        c("Occurrence-form CGL on ISO CG 00 01 or equivalent, including products/completed operations and contractual liability.", "green", "found.", []),
+        c(L("$2,000,000 each occurrence", "$4,000,000 general aggregate", "$4,000,000 products/completed ops aggregate", "Umbrella may satisfy") + "<span class=cite>1</span>", "green", "found.", [q("Pinecrest MSA v4.pdf", 14, "limits of not less than $2,000,000 per occurrence and $4,000,000 in the aggregate, which may be satisfied through a combination of primary and umbrella")]),
+        c("Pinecrest Health System, its affiliates, officers, and employees; ongoing and completed operations; CG 20 10 and CG 20 37 or equivalent.", "green", "found.", []),
+        c("Primary and non-contributory as to Pinecrest.", "green", "found.", []),
+        c("Waiver of subrogation in favor of Pinecrest and affiliates.", "green", "found.", []),
+        c("30 days written notice of cancellation to Pinecrest; 10 days for non-payment.", "green", "found.", []),
+        c(L("CGL-3310221 (Northwind Mutual, 01 Oct 2025–01 Oct 2026)", "UMB-5510087 (Northwind Mutual, $5M)"), "green", "found. Entity and period match.", []),
+        c("$1,000,000 each occurrence / $2,000,000 aggregate primary; $5,000,000 umbrella follows form. Blanket AI (CG 20 10, CG 20 37), CG 20 01 primary/non-contributory, CG 24 04 waiver — all present.<span class=cite>1</span>", "green", "found.", [q("Policy CGL-3310221.pdf", 2, "Each Occurrence Limit $1,000,000 · General Aggregate Limit $2,000,000")]),
+        c(T("Partially supported", "yellow"), "yellow", "found. Limits are met only by combining primary and umbrella; endorsements satisfy AI, primary, and waiver terms. Notice of cancellation to certificate holders is not evidenced by an endorsement.", []),
+        c("Notice: policy provides notice per its own conditions; no endorsement extends 30-day notice to Pinecrest.", "yellow", "found. A certificate's notice wording does not amend the policy.", []),
+        c("Request CG 02 05 (or carrier equivalent) notice-of-cancellation endorsement naming Pinecrest, or negotiate the MSA to 'in accordance with policy provisions'.", "yellow", "", []),
+        c("Your GL program meets the $2M/$4M requirement when the $5M umbrella is counted, and the additional insured, primary, and waiver terms are already on the policy. The one gap is the 30-day cancellation notice: the contract asks for it, but nothing on the policy commits the carrier to notify Pinecrest.", "yellow", "", []),
+      ]},
+      { doc: "§12.2 Commercial Automobile", sub: "Obligated: Cedar Ridge Manufacturing Inc.", cells: [
+        c("§12.2, Exhibit D.", "green", "found.", []),
+        c("Auto liability covering owned, hired, and non-owned autos (symbol 1 or equivalent).", "green", "found.", []),
+        c("$1,000,000 combined single limit.", "green", "found.", []),
+        c("Pinecrest as additional insured.", "green", "found.", []),
+        c("Not stated.", "grey", "not_stated. Clause is silent on primary wording for auto.", [], "not_stated"),
+        c("Waiver of subrogation in favor of Pinecrest.", "green", "found.", []),
+        c("30 days written notice.", "green", "found.", []),
+        c("CA-9930014 (Northwind Mutual, 01 Oct 2025–01 Oct 2026).", "green", "found.", []),
+        c("Symbol 1 any auto; $1,000,000 CSL; CA 20 48 designated insured (blanket); CA 04 44 waiver (blanket).<span class=cite>1</span>", "green", "found.", [q("Policy CA-9930014.pdf", 2, "Covered Autos: 1 · Liability $1,000,000 Combined Single Limit")]),
+        c(T("Supported", "green"), "green", "found. All stated requirements evidenced by policy and endorsements, except cancellation notice (see §12.1).", []),
+        c("Cancellation notice to Pinecrest not evidenced.", "yellow", "found.", []),
+        c("Same notice-of-cancellation endorsement request as §12.1.", "yellow", "", []),
+        c("Auto is in good shape. Limits, additional insured, and waiver are all on the policy. Only the cancellation-notice point carries over.", "green", "", []),
+      ]},
+      { doc: "§12.3 Workers' Compensation and Employer's Liability", sub: "Obligated: Cedar Ridge Manufacturing Inc.", cells: [
+        c("§12.3, Exhibit D.", "green", "found.", []),
+        c("Statutory workers' compensation; employer's liability.", "green", "found.", []),
+        c(L("WC: statutory", "EL: $1,000,000 each accident / disease-policy / disease-each employee"), "green", "found.", []),
+        c("Not applicable.", "grey", "not_applicable. Additional insured status is not available on WC.", [], "not_applicable"),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("Waiver of subrogation in favor of Pinecrest where permitted by law.", "green", "found.", []),
+        c("30 days written notice.", "green", "found.", []),
+        c("WC-1120993 (Keystone Compensation Co., 01 Oct 2025–01 Oct 2026).", "green", "found.", []),
+        c("Part One: NC, SC, VA; EL $1,000,000 / $1,000,000 / $1,000,000; WC 00 03 13 blanket waiver.<span class=cite>1</span>", "green", "found.", [q("Policy WC-1120993.pdf", 1, "Employers Liability: $1,000,000 Each Accident, $1,000,000 Disease-Policy Limit, $1,000,000 Disease-Each Employee")]),
+        c(T("Supported", "green"), "green", "found.", []),
+        c("None beyond the cancellation-notice point.", "green", "found.", []),
+        c("No correction needed for limits or waiver.", "green", "", []),
+        c("Workers' comp and employer's liability meet the contract as written.", "green", "", []),
+      ]},
+      { doc: "§12.4 Umbrella / Excess Liability", sub: "Obligated: Cedar Ridge Manufacturing Inc.", cells: [
+        c("§12.4, Exhibit D.", "green", "found.", []),
+        c("Umbrella or excess liability following form over GL, auto, and employer's liability.", "green", "found.", []),
+        c("<b>$10,000,000</b> each occurrence and aggregate.<span class=cite>1</span>", "green", "found.", [q("Pinecrest MSA v4.pdf", 15, "Umbrella or Excess Liability with limits of not less than $10,000,000")]),
+        c("Same additional insureds as underlying.", "green", "found.", []),
+        c("Primary and non-contributory as to Pinecrest.", "green", "found.", []),
+        c("Waiver of subrogation.", "green", "found.", []),
+        c("30 days written notice.", "green", "found.", []),
+        c("UMB-5510087 (Northwind Mutual, 01 Oct 2025–01 Oct 2026).", "green", "found.", []),
+        c("<b>$5,000,000</b> each occurrence / $5,000,000 aggregate; follows form over scheduled underlying.<span class=cite>1</span>", "red", "found.", [q("Policy UMB-5510087.pdf", 1, "Limits of Insurance: $5,000,000 Each Occurrence · $5,000,000 Aggregate")]),
+        c(T("Express mismatch", "red"), "red", "found. Required $10,000,000; in force $5,000,000. Note: if $2M of the GL requirement in §12.1 is satisfied through the umbrella, the available excess for §12.4 is reduced further.", []),
+        c("$5,000,000 shortfall in umbrella limit; the same umbrella is also relied on to top up GL under §12.1.", "red", "found.", []),
+        c("Obtain a $5M excess layer over UMB-5510087, or negotiate §12.4 to $5,000,000. A difference alone is not a gap until the client decides which path to take.", "red", "", []),
+        c("The contract asks for a $10M umbrella and you carry $5M. That is the one hard mismatch in this agreement. You can buy an additional $5M layer or ask Pinecrest to accept $5M; we can price the layer before you decide.", "red", "", []),
+      ]},
+      { doc: "§12.5 Cyber / Network Security", sub: "Obligated: Cedar Ridge Manufacturing Inc.", cells: [
+        c("§12.5, Exhibit D.", "green", "found.", []),
+        c("Network security and privacy liability, including breach response costs and regulatory defense.", "green", "found.", []),
+        c("$3,000,000 per claim and aggregate.", "green", "found.", []),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("30 days written notice.", "green", "found.", []),
+        c("No policy supplied.", "grey", "not_evidenced. The document set contains no cyber policy, binder, or certificate.", [], "insufficient_inputs"),
+        c("Not evidenced.", "grey", "insufficient_inputs.", [], "insufficient_inputs"),
+        c(T("Not evidenced", "grey"), "grey", "insufficient_inputs. Cannot assess; no cyber policy in the review set.", [], "insufficient_inputs"),
+        c("Requirement exists; coverage evidence absent.", "grey", "", [], "insufficient_inputs"),
+        c("Request the current cyber policy and declarations from the client, or confirm none is carried.", "yellow", "", []),
+        c("Pinecrest requires $3M of cyber coverage. We do not have a cyber policy on file for you. If you carry one, send it over; if not, this will need to be placed before signature.", "yellow", "", []),
+      ]},
+      { doc: "§12.6 Professional / E&O Liability", sub: "Obligated: Cedar Ridge Manufacturing Inc.", cells: [
+        c("§12.6, Exhibit D.", "green", "found.", []),
+        c("Professional liability covering errors and omissions in the Services, claims-made permitted with 3-year tail.", "green", "found.", []),
+        c("$2,000,000 per claim and aggregate.", "green", "found.", []),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("Not stated.", "grey", "not_stated.", [], "not_stated"),
+        c("30 days written notice.", "green", "found.", []),
+        c("EO-2288101 (Atlas Specialty, claims-made, 15 Mar 2026–15 Mar 2027).", "green", "found.", []),
+        c("$2,000,000 each claim / $2,000,000 aggregate; retroactive date 15 Mar 2019; optional ERP up to 36 months at 200% premium.<span class=cite>1</span>", "green", "found.", [q("Policy EO-2288101.pdf", 1, "Extended Reporting Period: 12, 24 or 36 months available at 100%, 150% or 200% of the annual premium")]),
+        c(T("Supported", "green"), "green", "found. Limits match; 36-month ERP is available, which satisfies the 3-year tail condition if elected.", []),
+        c("Tail is available but not yet purchased; the MSA requires it only on expiry or cancellation.", "green", "found.", []),
+        c("No correction now. Diary the ERP election requirement at policy expiry.", "green", "", []),
+        c("Your E&O policy meets the $2M requirement and offers the 3-year tail the contract calls for if you ever let it lapse.", "green", "", []),
+      ]},
+    ],
+    chat: [
+      ["Summarize what we need to tell Cedar Ridge before they sign.", "<p>One hard mismatch, one missing policy, and one endorsement to request. Everything else is supported.</p><ul><li><b>Umbrella (§12.4):</b> contract requires $10M; the policy carries $5M <span class=cite>1</span>. Either buy a $5M excess layer or negotiate the clause down.</li><li><b>Cyber (§12.5):</b> $3M required; no cyber policy in the file <span class=cite>2</span>. Confirm whether one exists.</li><li><b>Cancellation notice (§12.1, 12.2):</b> the MSA wants 30 days' notice to Pinecrest; no endorsement on the GL or auto policy commits the carrier to that <span class=cite>3</span>. Request a notice endorsement or soften the clause.</li></ul><p>GL limits are met by stacking the umbrella, which is allowed under §12.1, but that same umbrella is what falls short in §12.4, so the two issues should be resolved together.</p>"],
+    ],
+  },
+};
+
+// Template catalog for the "New review" modal (from the backend catalog).
+const CATALOG = {
+  "Commercial Insurance": [
+    ["CI01","Commercial Quote Comparison",31,"One carrier quote option × coverage line or package section × proposed term.",["Carrier quote and attached terms for every option","Requested coverage specification or user-confirmed requirements"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI02","Commercial Renewal Changes",25,"One coverage line × expiring/renewal pair.",["Expiring policy and endorsements","Renewal quote or policy"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI03","Prospect Account Review",27,"One in-force policy × coverage line for the prospect.",["Current policies, declarations and endorsements"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI04","Policy Delivery Check",22,"One placement × coverage line × accepted-quote/binder/issued-policy bundle.",["Accepted quote and documented acceptance","Binder","Issued policy and endorsements"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI05","Submission Readiness",21,"One submission × coverage line.",["Applications, supplementals, loss runs, schedules"],[]],
+    ["CI06","Account Handoff",21,"One account × policy or open service item.",["Policies, correspondence, open items list"],[]],
+    ["CI07","Multi-location Account Review",24,"One location × coverage line.",["Statement of values","Policies and location schedules"],["CX01"]],
+    ["CI08","Coverage Review",22,"One coverage line × in-force policy.",["All in-force policies and endorsements","Operations description"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI09","Total Cost of Risk",23,"One cost component × line × business unit × period.",["Premium invoices, retained loss data, fees"],[]],
+    ["CI10","Deductible and Retention Scenarios",22,"One retention scenario × coverage line.",["Quote options at each retention","Loss history"],[]],
+    ["CI11","Contract Insurance Requirements",21,"One contract clause or atomic insurance requirement × obligated entity × relevant policy program.",["Executed contract or labeled draft with insurance requirements","Policies and actual endorsements"],["CX02"]],
+    ["CI12","M&A Insurance Alignment",26,"One coverage line × Company A/Company B pair.",["Both companies' policies and schedules"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+    ["CI13","Commercial Proposal Comparison",22,"One broker proposal × service or coverage item.",["Each broker proposal"],["CX01","CX02","CX03","CX04","CX05","CX06","CX07"]],
+  ],
+  "Employee Health & Benefits": [
+    ["EB01","Benefits Quote and Proposal Comparison",33,"One plan option × benefit item.",["Carrier quotes and plan summaries"],["BX01","BX02","BX03","BX04"]],
+    ["EB02","Benefits Renewal Changes",23,"One plan × current/renewal pair.",["Current and renewal plan documents and rates"],["BX01","BX02","BX03"]],
+    ["EB03","Employer Contribution Scenarios",21,"One contribution scenario × plan × tier.",["Rates, enrollment, contribution strategy"],[]],
+    ["EB04","Employee Impact Analysis",21,"One household profile × plan option.",["Plan designs, rates, utilization assumptions"],["BX01"]],
+    ["EB05","Benefits Budget Planning",22,"One plan × budget scenario × period.",["Rates, enrollment, trend assumptions"],["BX03"]],
+    ["EB06","Benefits Vendor Contract Review",23,"One contract term × vendor agreement.",["Executed vendor agreements and fee schedules"],["BX03","BX04"]],
+    ["EB07","Benefits Harmonization",24,"One benefit item × company or class.",["Each company's plan documents and rates"],["BX01","BX02","BX03"]],
+  ],
+};
+const EXT = { CX01:["Property and Business Income",10], CX02:["General Liability",7], CX03:["Commercial Auto",7], CX04:["Workers Compensation",7], CX05:["Cyber",8], CX06:["D&O and Employment Practices",8], CX07:["Umbrella and Excess",6], BX01:["Dental and Vision",8], BX02:["Life and Disability",8], BX03:["Stop-loss",8], BX04:["PBM Pricing and Guarantees",8] };
+const EXT_COLS = { CX02: ["GL limits", "Products/completed ops", "Contractual liability", "Additional insured scope", "Primary and waiver", "Endorsed restrictions", "Other coverage terms"], CX01: ["Property valuation", "Statement of values", "Blanket vs scheduled", "Business income basis", "Dependent property", "Flood/quake", "Wind/hail", "Equipment breakdown", "Ordinance or law", "Protective safeguards"] };
+
+// ------------------------------------------------------------------
+// State + rendering
+// ------------------------------------------------------------------
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+let current = "policy", activeView = 0, selected = null, panelTab = "cell", generated = true, runTimer = null;
+
+function iconDoc() { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>'; }
+
+function renderSidebar() {
+  $("#recent-projects").innerHTML = Object.values(SCENARIOS).map(s => `<span>${s.project}</span>`).join("");
+  $("#recent-reviews").innerHTML = Object.values(SCENARIOS).map(s => `<span>${s.title}</span>`).join("");
+}
+
+function renderScenario() {
+  const s = SCENARIOS[current];
+  $("#crumb-project").textContent = s.project;
+  $("#crumb-review").textContent = s.title;
+  $("#review-title").textContent = s.title;
+  $("#review-template").textContent = s.template;
+  $("#review-meta").textContent = s.meta;
+  $("#views").innerHTML = s.views.map((v, i) => `<button type="button" aria-pressed="${i === activeView}" data-view="${i}">${v[0]}</button>`).join("");
+  renderTable();
+  closePanel();
+  setProgress(generated ? 1 : 0, generated ? "Complete" : "Ready");
+}
+
+function renderTable() {
+  const s = SCENARIOS[current];
+  const thead = $("#grid thead"), tbody = $("#grid tbody");
+  thead.innerHTML = "<tr>" + `<th class="doc">${s.rowLabel}</th>` +
+    s.columns.map(([n, k]) => `<th>${n}<span class="kind">${k}</span></th>`).join("") +
+    `<th class="add"><button type="button" id="btn-add-col"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add column</button></th></tr>`;
+  const filter = s.views[activeView][1];
+  tbody.innerHTML = s.rows.map((r, ri) => {
+    const hidden = filter && !filter(r.cells) ? " hidden-row" : "";
+    return `<tr class="${hidden}">` +
+      `<td class="doc"><div class="doc-cell">${iconDoc()}<div><div class="t">${r.doc}</div><div class="s">${r.sub}</div></div></div></td>` +
+      r.cells.map((cell, ci) => cellHtml(cell, ri, ci)).join("") + `<td style="cursor:default;min-width:120px"></td></tr>`;
+  }).join("");
+  $("#btn-add-col").addEventListener("click", () => toast("Add column: pick a preset, write a prompt, or generate one from the column title."));
+}
+
+function cellHtml(cell, ri, ci) {
+  if (!generated) return `<td class="pending" data-r="${ri}" data-c="${ci}"><div class="shimmer"></div><div class="shimmer"></div></td>`;
+  const sel = selected && selected.r === ri && selected.c === ci ? " selected" : "";
+  return `<td class="${sel}" data-r="${ri}" data-c="${ci}" tabindex="0" role="button" aria-label="Open cell"><div class="cell"><span class="flag ${cell.flag}"></span><div class="cell-text">${cell.text}</div></div></td>`;
+}
+
+function openCell(ri, ci) {
+  selected = { r: ri, c: ci }; panelTab = "cell";
+  renderTable();
+  renderPanel();
+}
+
+function renderPanel() {
+  const side = $("#side"); side.hidden = false; $("#work").classList.add("with-panel");
+  $$("[data-side]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.side === panelTab)));
+  $("#side-cell").hidden = panelTab !== "cell"; $("#side-chat").hidden = panelTab !== "chat";
+  if (panelTab === "chat") { renderChat(); return; }
+  const s = SCENARIOS[current];
+  if (!selected) { $("#side-cell").innerHTML = `<div class="empty"><h3>Select a cell</h3>Click any cell to see the extracted value, the evidence status, and the source citations behind it.</div>`; return; }
+  const row = s.rows[selected.r], col = s.columns[selected.c], cell = row.cells[selected.c];
+  const status = cell.status || "found";
+  const tone = { found: "green", not_stated: "grey", not_applicable: "grey", insufficient_inputs: "grey", conflicting_evidence: "yellow", not_comparable: "yellow" }[status] || "grey";
+  $("#side-cell").innerHTML = `
+    <dl class="kv"><dt>${s.rowLabel}</dt><dd>${row.doc}</dd><dt>Column</dt><dd>${col[0]} <span class="kind" style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em">${col[1]}</span></dd></dl>
+    <div><p class="sec-title">Answer</p><div class="summary-box">${cell.text}</div></div>
+    <div><p class="sec-title">Evidence status</p><div class="status-line"><span class="flag ${cell.flag}" style="margin:0"></span>${T(status.replace(/_/g, " "), tone)}<span style="color:var(--text-3)">${{green:"confirmed / favorable",yellow:"conditional / needs review",red:"gap or adverse term",grey:"not addressed"}[cell.flag]}</span></div></div>
+    ${cell.reasoning ? `<div><p class="sec-title">Explanation</p><div class="reason">${cell.reasoning}</div></div>` : ""}
+    <div><p class="sec-title">Citations</p>${cell.cites.length ? cell.cites.map((ct, i) => `<div class="citation"><div class="h"><span class="cite">${i + 1}</span><b>${ct.doc}</b><span>· p. ${ct.page}</span></div><q>${ct.quote}</q></div>`).join("") : `<div class="reason">No verbatim citation. ${status === "found" ? "Analysis cells cite the extraction cells they draw on." : "Nothing in the supplied documents addresses this item."}</div>`}</div>
+    <div><p class="sec-title">Review</p><div class="actions"><button class="pill" type="button" data-act="verify">Mark reviewed</button><button class="pill" type="button" data-act="override">Override value</button><button class="pill" type="button" data-act="regen">Regenerate cell</button><button class="pill" type="button" data-act="open">Open source at p. ${cell.cites[0]?.page ?? 1}</button></div></div>`;
+  $$("[data-act]", $("#side-cell")).forEach(b => b.addEventListener("click", () => toast({ verify: "Marked reviewed by Dana Whitfield. Model value and reviewer status stay separate.", override: "Override keeps the original model value, your correction, and the reason.", regen: "Regenerating this cell against the same source versions…", open: "Opens the source document in the side panel at the cited page." }[b.dataset.act])));
+}
+
+function renderChat() {
+  const s = SCENARIOS[current];
+  const el = $("#side-chat");
+  el.innerHTML = s.chat.map(([u, a]) => `<div class="msg user">${u}</div><div class="msg ai">${a}</div>`).join("") +
+    `<div class="suggest"><button type="button">Which rows have red flags?</button><button type="button">Draft the client email</button><button type="button">Compare row 1 and row 3</button></div>
+     <div class="chat-input"><input type="text" placeholder="Ask about this review…" aria-label="Ask about this review"><button type="button" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`;
+  $$(".suggest button, .chat-input button", el).forEach(b => b.addEventListener("click", () => toast("In the product this sends the question to the assistant, which reads the table cells and answers with cell citations.")));
+}
+
+function closePanel() { $("#side").hidden = true; $("#work").classList.remove("with-panel"); selected = null; }
+
+function setProgress(frac, label) { $("#progress-bar").style.width = Math.round(frac * 100) + "%"; $("#progress-label").textContent = label; }
+
+function runReview() {
+  if (runTimer) return;
+  generated = false; closePanel(); renderTable();
+  const s = SCENARIOS[current];
+  const cells = []; s.rows.forEach((r, ri) => r.cells.forEach((_, ci) => cells.push([ri, ci])));
+  let i = 0; setProgress(0, "Extracting…"); $("#btn-run").disabled = true;
+  runTimer = setInterval(() => {
+    const [ri, ci] = cells[i];
+    const td = $(`td[data-r="${ri}"][data-c="${ci}"]`);
+    if (td) td.outerHTML = cellHtml(s.rows[ri].cells[ci], ri, ci);
+    i++; setProgress(i / cells.length, `Extracting… ${i} of ${cells.length} cells`);
+    if (i >= cells.length) { clearInterval(runTimer); runTimer = null; generated = true; setProgress(1, "Complete"); $("#btn-run").disabled = false; toast("Review complete. Cells are model output; reviewer status is set only by a person."); }
+  }, 140);
+}
+
+// modal
+let mSel = "CI04", mExt = new Set(), mAll = false;
+function renderModal() {
+  $("#tpl-list").innerHTML = Object.entries(CATALOG).map(([g, items]) => `<div class="tpl-group">${g}</div>` + items.map(t => `<button type="button" role="option" aria-selected="${t[0] === mSel}" data-tpl="${t[0]}"><span>${t[1]}</span><small>${t[0]} · ${t[2]} cols</small></button>`).join("")).join("");
+  $$("[data-tpl]").forEach(b => b.addEventListener("click", () => { mSel = b.dataset.tpl; mExt = new Set(); mAll = false; renderModal(); }));
+  const t = Object.values(CATALOG).flat().find(x => x[0] === mSel);
+  const visible = Math.min(20, t[2]);
+  const extCols = Array.from(mExt).reduce((n, id) => n + EXT[id][1], 0);
+  const planned = (mAll ? t[2] : visible) + extCols;
+  const cols = current === "quote" && mSel === "CI01" ? SCENARIOS.quote.columns.map(x => x[0]) : mSel === "CI04" ? SCENARIOS.policy.columns.map(x => x[0]) : mSel === "CI11" ? SCENARIOS.contract.columns.map(x => x[0]) : ["Insured entity", "Carrier", "Coverage line", "Policy or quote number", "Effective date", "Expiration date", "Premium", "Limits"];
+  $("#tpl-detail").innerHTML = `
+    <h3>${t[1]}</h3>
+    <div class="row-grain"><b>Each row is:</b> ${t[3]}</div>
+    <div><b>Documents needed:</b> ${t[4].join("; ")}</div>
+    ${t[5].length ? `<div><b>Add coverage columns</b><div class="chips" style="margin-top:6px">${t[5].map(id => `<label><input type="checkbox" data-ext="${id}" ${mExt.has(id) ? "checked" : ""}> ${EXT[id][0]} <span style="color:var(--text-3)">(${EXT[id][1]})</span></label>`).join("")}</div></div>` : ""}
+    ${t[2] > 20 ? `<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="m-all" ${mAll ? "checked" : ""} style="accent-color:var(--accent);margin:0"> Include all ${t[2]} template columns (default view has ${visible})</label>` : ""}
+    <div><b>Columns</b><div class="col-preview" style="margin-top:6px">${cols.slice(0, 10).map(n => `<span>${n}</span>`).join("")}${Array.from(mExt).flatMap(id => (EXT_COLS[id] || [EXT[id][0] + " terms"]).slice(0, 3)).map(n => `<span>${n}</span>`).join("")}<span class="more">+ ${Math.max(0, planned - 10 - Math.min(3, extCols))} more</span></div></div>
+    <div style="color:var(--text-3)">${planned} columns will be created. Each column carries its own extraction prompt from the template; you can edit them after the review is created.</div>`;
+  $$("[data-ext]").forEach(cb => cb.addEventListener("change", () => { cb.checked ? mExt.add(cb.dataset.ext) : mExt.delete(cb.dataset.ext); renderModal(); }));
+  const all = $("#m-all"); if (all) all.addEventListener("change", () => { mAll = all.checked; renderModal(); });
+}
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3200); }
+
+// wiring
+$$("[data-scenario]").forEach(b => b.addEventListener("click", () => { if (runTimer) return; current = b.dataset.scenario; activeView = 0; generated = true; $$("[data-scenario]").forEach(x => x.setAttribute("aria-selected", String(x === b))); renderScenario(); }));
+$("#views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (!b) return; activeView = Number(b.dataset.view); const v = SCENARIOS[current].views[activeView]; if (!v[1] && activeView > 0) toast(`"${v[0]}" view: in the product this pivots or filters the same cells; the demo shows the default layout.`); renderScenario(); });
+$("#grid").addEventListener("click", e => { const td = e.target.closest("td[data-r]"); if (!td || !generated) return; openCell(Number(td.dataset.r), Number(td.dataset.c)); });
+$("#grid").addEventListener("keydown", e => { if (e.key !== "Enter" && e.key !== " ") return; const td = e.target.closest("td[data-r]"); if (!td) return; e.preventDefault(); openCell(Number(td.dataset.r), Number(td.dataset.c)); });
+$$("[data-side]").forEach(b => b.addEventListener("click", () => { panelTab = b.dataset.side; renderPanel(); }));
+$("#side-close").addEventListener("click", () => { closePanel(); renderTable(); });
+$("#btn-chat").addEventListener("click", () => { panelTab = "chat"; renderPanel(); });
+$("#btn-run").addEventListener("click", runReview);
+$("#btn-export").addEventListener("click", () => toast("Export writes the table, flags, and citations to Excel with a tamper-evident manifest."));
+$("#btn-new").addEventListener("click", () => { mSel = { policy: "CI04", quote: "CI01", contract: "CI11" }[current]; mExt = new Set(current === "policy" ? [] : ["CX02"]); mAll = false; $("#m-name").value = ""; renderModal(); $("#scrim").classList.add("open"); $("#m-name").focus(); });
+$("#m-cancel").addEventListener("click", () => $("#scrim").classList.remove("open"));
+$("#scrim").addEventListener("click", e => { if (e.target === $("#scrim")) $("#scrim").classList.remove("open"); });
+$("#m-next").addEventListener("click", () => { $("#scrim").classList.remove("open"); toast("Next: share access, then add documents (upload or pick from a project). Rows are proposed from the template's row grain before extraction starts."); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#scrim").classList.remove("open"); });
+
+renderSidebar();
+renderScenario();
+</script>
+
+</body>
+</html>
