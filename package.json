@@ -5,17 +5,22 @@
   "description": "Standalone handoff kit for an insurance tabular review product: template catalog package, implementation spec, and clickable demo.",
   "workspaces": [
     "packages/*",
-    "demo"
+    "apps/*",
+    "web"
   ],
   "scripts": {
     "build:catalog": "node templates/scripts/build-catalog.mjs",
-    "test": "npm test --workspace packages/review-templates",
-    "typecheck": "npm run typecheck --workspace packages/review-templates && npm run typecheck --workspace demo",
-    "build": "npm run build --workspace packages/review-templates && npm run build --workspace demo",
-    "demo": "npm run build --workspace packages/review-templates && npm run dev --workspace demo"
+    "build": "npm run build -w packages/review-templates && npm run build -w apps/api && npm run build -w web",
+    "test": "npm test -w packages/review-templates && npm test -w apps/api",
+    "typecheck": "npm run typecheck -w packages/review-templates && npm run typecheck -w apps/api && npm run typecheck -w web",
+    "dev": "npm run build -w packages/review-templates && concurrently -n api,web -c blue,green \"npm run dev -w apps/api\" \"npm run dev -w web\"",
+    "demo": "npm run dev"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }

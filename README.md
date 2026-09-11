@@ -1,21 +1,61 @@
 # Insurance Tabular Review
 
-A standalone kit for building tabular review into an insurance product:
-upload policies, quotes, binders, certificates, treaties, claims files, or
-contracts; pick a review template; get a grid of rows × columns where every
-cell is an extracted or assessed value with a traffic-light flag and verbatim
-citations back to the source page.
+A working tabular review product for insurance documents. Upload policies,
+quotes, binders, certificates, treaties, claims files, or contracts; pick a
+review template; run it; get a grid of rows × columns where every cell is an
+extracted or assessed value with a traffic-light flag and a verbatim citation
+that has been verified against the source page.
 
-This repo is the handoff. It contains what a team needs to implement the
-feature natively in its own stack, and nothing else.
+Built clean-room from the [spec](spec/) in this repo. MIT licensed.
+
+## Run it
+
+```bash
+git clone https://github.com/drmikegoetsch-sudo/insurance-tabular-review.git
+cd insurance-tabular-review
+npm install
+npm run seed -w apps/api    # three fictional reviews so there is something to look at
+npm run dev                 # API on :3001, web on :5173
+```
+
+Open http://localhost:5173. No database and no model key are needed: the
+API uses a JSON file store and a stub extraction provider that pulls real
+passages out of the uploaded documents. To extract with Claude instead:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+npm run dev
+```
+
+For Postgres, apply `apps/api/src/store/schema.sql` and set `DATABASE_URL`.
+All settings are in [`apps/api/.env.example`](apps/api/.env.example).
+
+## What is here
 
 | Path | What it is |
 | --- | --- |
-| [`demo/`](demo/) | Runnable React demo of the review page on fictional accounts: Quote Comparison, Policy Checking, Contract Review, plus a blank review and every catalog template. Built with Vite, Tailwind, and the templates package. |
-| [`packages/review-templates/`](packages/review-templates/) | The template catalog as a dependency-free TypeScript package: 20 templates, 11 extensions, 559 columns, column builder, prompt assembly, cell parser, and a React template picker. |
-| [`spec/`](spec/) | Implementation spec: data model, API, extraction contract, review lifecycle and UI. |
-| [`templates/source/`](templates/source/) | The authored workbook and JSON export the catalog is generated from. |
-| [`design/`](design/) | Design files, when ready. |
+| [`apps/api/`](apps/api/) | Express API. Documents (PDF, text, pre-extracted JSON), reviews, rows, cells, streaming generation with a lease, citation validation, reviewer state, staleness, sharing, chat over the grid, Excel export. File store for local runs, Postgres store for real deployments. |
+| [`web/`](web/) | React front end in the team's design language: sidebar, grid, drag-in documents, live extraction, All / Differences / Needs attention views, source panel with the cited page, reviewer actions, add column, chat. |
+| [`packages/review-templates/`](packages/review-templates/) | The template catalog as a dependency-free TypeScript package: 20 templates, 11 extensions, 559 columns, column builder, prompt assembly, cell parser, React template picker. |
+| [`spec/`](spec/) | Data model, API, extraction contract, review lifecycle. The API implements it. |
+| [`templates/source/`](templates/source/) | The authored workbook and JSON the catalog is generated from (`npm run build:catalog`). |
+
+## How extraction plugs in
+
+The API talks to a model through one interface, `ExtractionProvider` in
+[`apps/api/src/extraction/types.ts`](apps/api/src/extraction/types.ts):
+
+```ts
+extractRow(input): AsyncIterable<CellResult>   // one cell per column, any order
+chat?(input): Promise<string>                  // optional, answers over the grid
+```
+
+Two providers ship: `stub` (no model, deterministic passages from the
+documents) and `anthropic` (Claude, streamed, one request per row). To use
+your own extraction loop, implement `extractRow` against the prompts the
+package builds, or map your existing output into `CellResult` objects. The
+runner handles persistence, streaming, citation validation, the generation
+lease, and review state either way.
 
 ## The templates
 
@@ -33,60 +73,28 @@ Benefits Renewal Changes, Employer Contribution Scenarios, Employee Impact
 Analysis, Benefits Budget Planning, Benefits Vendor Contract Review, Benefits
 Harmonization.
 
-**Extensions** add line-specific columns to a template: Property and Business
-Income, General Liability, Commercial Auto, Workers Compensation, Cyber, D&O
-and Employment Practices, Umbrella and Excess, Dental and Vision, Life and
+**Extensions** add line-specific columns: Property and Business Income,
+General Liability, Commercial Auto, Workers Compensation, Cyber, D&O and
+Employment Practices, Umbrella and Excess, Dental and Vision, Life and
 Disability, Stop-loss, PBM Pricing and Guarantees.
 
-Every column is one of three kinds: `extract` (read a value), `analysis`
-(compare or assess, citing both sides), or `calculate` (a specification the
-application computes; the model only gathers inputs).
+Column kinds: `extract` (read a value), `analysis` (compare or assess, citing
+both sides), `calculate` (a specification the application computes; the model
+gathers inputs only).
 
-## Quick start
+## Verify
 
 ```bash
-npm install
-npm test            # catalog integrity, column builder, prompts, cell parser
+npm test          # package tests + API tests (end to end against the stub provider)
 npm run typecheck
-npm run demo        # builds the package, then serves the React demo on http://localhost:5173
+npm run build
 ```
 
-The demo is the visual reference for the spec. Drag a sample document into a
-review to watch cells extract, click any cell to open the source panel with
-its verbatim citations, switch to "Differences" to see only the columns where
-rows disagree, and use "New Review" to start from a sample, a blank grid, or
-any of the 20 catalog templates. `demo/src/ReviewPage.tsx` and
-`demo/src/reviewData.ts` are the files to lift into a product; the two
-`components/ui` files are stand-ins for shadcn's Button and DropdownMenu.
+## What is not done
 
-```ts
-import { buildColumns, buildSystemPrompt, buildRowPrompt, parseCellLine }
-  from "@insurance-tabular-review/templates";
-
-const columns = buildColumns({ templateId: "CI04", extensionIds: ["CX02"] });
-// system: buildSystemPrompt()   user: buildRowPrompt({ documents, userContext, columns })
-// then parseCellLine() on each streamed line
-```
-
-See [`packages/review-templates/README.md`](packages/review-templates/README.md)
-for the full API and [`spec/`](spec/) for how the pieces fit.
-
-## Suggested build order
-
-1. Data model and the templates endpoints (spec 1, 2). Half a day with the package.
-2. Create-review flow with the template picker (spec 4, demo "New review").
-3. Extraction: document text cache, one request per row, streamed cell writes, citation validation (spec 3).
-4. Grid, cell panel, views.
-5. Review state: reviewed, locked, override, stale.
-6. Chat over the grid, export.
-
-## Regenerating the catalog
-
-Edit `templates/source/insurance-review-templates.json` (or export it again
-from the workbook) and run `npm run build:catalog`. Tests will fail if a
-template loses its row grain, a column loses its prompt, or an extension
-points at a template that does not list it.
-
-## License
-
-[MIT](LICENSE).
+- Deterministic engine for the 36 `calculate` columns (they return gathered inputs today)
+- Row proposal is rule-based (one row per document or per folder, roles from filenames); the template `row_setup_prompt` is returned for a model-backed version
+- Pivot views; filters exist (Differences, Needs attention)
+- Real authentication: the API trusts an `x-user-id` header, which the host app should set from its own session
+- Prompt tuning per template against real documents
+- Per-review cost controls and run metrics
